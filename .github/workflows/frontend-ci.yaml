@@ -8,7 +8,7 @@ on:
     # Manual trigger
     workflow_dispatch:
 env:
-    frontent_path: ./starter/frontend/
+  frontend_path: ./starter/frontend/
 
 jobs:
     lint-job:
@@ -40,10 +40,9 @@ jobs:
               run: echo "cache miss :("
 
             - name: Install dependencies
-              run: npm install env.frontend_path
-
+              run: npm install ${{ env.frontend_path }}
             - name: Build
-              run: npm run lint env.frontend_path
+              run: npm run lint ${{ env.frontend_path }}
 
 
 # TEST JOB: There should be a job in the workflow that runs the tests The job should have these steps:
