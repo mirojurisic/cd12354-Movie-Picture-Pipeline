@@ -16,10 +16,12 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
+
             - name: Setup Nodejs
               uses: actions/setup-node@v4
               with:
                 node-version: '18'
+
             # https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
             - name: Cache node modules
               # job id
@@ -40,9 +42,10 @@ jobs:
               run: echo "cache miss :("
 
             - name: Install dependencies
-              run: npm install ${{ env.frontend_path }}
-            - name: Build
-              run: npm run lint ${{ env.frontend_path }}
+              run: cd ${{ env.frontend_path }} |  npm ci
+
+            - name: Run lint
+              run: cd ${{ env.frontend_path }} |  npm run lint
 
 
 # TEST JOB: There should be a job in the workflow that runs the tests The job should have these steps:
