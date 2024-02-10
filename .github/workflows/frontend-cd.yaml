@@ -10,9 +10,9 @@ on:
     # Manual trigger
     workflow_dispatch:
     # DONE: this is to speed up development, needs to be commented out before submitting project
-    # push:
-    #     branches:
-    #         main
+    push:
+        branches:
+            main
 env:
   FRONTEND_PATH: ./starter/frontend
   NODE_VERSION: '18'
@@ -22,8 +22,7 @@ env:
 
 jobs:
   lint-job:
-    if: github.event.pull_request.merged == true  || github.event_name == 'workflow_dispatch' 
-    # || github.event_name == 'push'
+    if: github.event.pull_request.merged == true  || github.event_name == 'workflow_dispatch'  || github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -66,8 +65,7 @@ jobs:
       #   name: Inform of cache hit
       #   run: echo "cache miss :("
   test-job:
-    if: github.event.pull_request.merged == true  || github.event_name == 'workflow_dispatch'
-    # || github.event_name == 'push' 
+    if: github.event.pull_request.merged == true  || github.event_name == 'workflow_dispatch' || github.event_name == 'push' 
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
