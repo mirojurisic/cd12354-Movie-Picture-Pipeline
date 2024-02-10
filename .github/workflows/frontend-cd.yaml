@@ -150,13 +150,16 @@ jobs:
       - name: Update cluster name
         run: |
           aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
-      
+# When an Amazon EKS cluster is created, the IAM entity (user or role) that creates the cluster is added to the Kubernetes RBAC authorization table as the administrator. 
+# Initially, only that IAM user can make calls to the Kubernetes API server using kubectl.
+
       - name: Check k8s config minify
         run: |
           kubectl config view --minify
 
       - name: Check k8s config
         run: |
+          aws sts assume-role --role-arn "arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/eks_cluster_role --role-session-name AWSCLI-Session
           kubectl get svc
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
