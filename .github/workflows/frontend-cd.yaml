@@ -162,6 +162,5 @@ jobs:
         working-directory: ${{ env.FRONTEND_PATH }}/k8s
         run: |
           kustomize edit set image frontend=$REGISTRY/$REPOSITORY:$IMAGE_TAG
-          kustomize build | kubectl apply -f -
-          kubectl rollout status deployment/frontend
-          kubectl get services -o wide
+          kustomize build 
+          kubectl apply -f -
