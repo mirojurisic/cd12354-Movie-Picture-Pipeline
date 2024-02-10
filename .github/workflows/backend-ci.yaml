@@ -15,7 +15,7 @@ on:
     # TODO: this is to speed up development, needs to be commented out before submitting project
     push:
         branches:
-            main
+            mainW
 env:
   BACKEND_PATH: ./starter/backend
   PYTHON_VERSION: '3.10'
@@ -33,13 +33,14 @@ jobs:
               with:
                 python-version: ${{  env.PYTHON_VERSION}}
 
+            - name: Install pipenv
+              run: pip install pipenv
+
             - name: Install dependencies
               # change path
               working-directory: ${{ env.BACKEND_PATH }}
               run: pipenv install
 
-            - name: Install pipenv
-              run: pip install pipenv
     
             - name: Run lint
               id: run-lint
