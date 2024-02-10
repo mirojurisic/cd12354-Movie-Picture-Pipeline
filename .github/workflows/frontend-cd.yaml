@@ -160,7 +160,7 @@ jobs:
           REPOSITORY: movie-picture-frontend
           IMAGE_TAG: ${{ github.sha }}
         working-directory: ${{ env.FRONTEND_PATH }}/k8s
+        # output of build command is input for kubectl apply command !
         run: |
           kustomize edit set image frontend=$REGISTRY/$REPOSITORY:$IMAGE_TAG
-          kustomize build 
-          kubectl apply -f -
+          kustomize build | kubectl apply -f -
