@@ -1,0 +1,147 @@
+# There should be a file called .github/workflows/frontend-cd.yaml in the root of the project.
+# on every pull request against the main branch.
+name: Miro's FE CD
+on:
+    # merge to main branch
+    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#running-your-pull_request-workflow-when-a-pull-request-merges
+    pull_request:
+      types:
+        - closed
+    # Manual trigger
+    workflow_dispatch:
+    # DONE: this is to speed up development, needs to be commented out before submitting project
+    push:
+        branches:
+            main
+env:
+  FRONTEND_PATH: ./starter/frontend
+  NODE_VERSION: '18'
+ # REACT_APP_MOVIE_API_URL
+
+  AWS_REGION: "eu-central-1" #Change to reflect your Region
+
+
+jobs:
+  lint-job:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{  env.NODE_VERSION}}
+
+      # https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
+      - name: Cache node modules
+        # job id
+        id: cache-npm
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          # npm cache files are stored in `~/.npm` on Linux/macOS
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+              ${{ runner.os }}-build-${{ env.cache-name }}-
+              ${{ runner.os }}-build-
+              ${{ runner.os }}-
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: Inform of cache hit
+        run: echo "cache miss :("
+
+      - name: Install dependencies
+        # change path
+        working-directory: ${{ env.FRONTEND_PATH }}
+        run: npm ci
+
+      - name: Run lint
+        id: run-lint
+        working-directory: ${{ env.FRONTEND_PATH }}
+        run: npm run lint
+      # - if: ${{ steps.run-lint.outputs.cache-hit != 'true' }}
+      #   name: Inform of cache hit
+      #   run: echo "cache miss :("
+  test-job:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{  env.NODE_VERSION}}
+
+      # https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
+      - name: Cache node modules
+        # job id
+        id: cache-npm
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          # npm cache files are stored in `~/.npm` on Linux/macOS
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+              ${{ runner.os }}-build-${{ env.cache-name }}-
+              ${{ runner.os }}-build-
+              ${{ runner.os }}-
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: Inform of cache hit
+        run: echo "cache miss :("
+
+      - name: Install dependencies
+        # change path
+        working-directory: ${{ env.FRONTEND_PATH }}
+        run: npm ci
+
+      - name: Run test
+        working-directory: ${{ env.FRONTEND_PATH }}
+        run: npm run test
+
+  build-job:
+    # I was confused does step in build needs to be repated or there was an error in assignement defintion
+    needs: [lint-job, test-job]
+    # if jobs in needs are successful
+    if: success() && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    # Permission can be added at job level or workflow level    
+    permissions:
+      id-token: write   # This is required for requesting the JWT
+      contents: read    # This is required for actions/checkout
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:oidc-provider/token.actions.githubusercontent.com #change to reflect your IAM role’s ARN
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+      # Hello from AWS: WhoAmI
+      - name: Sts GetCallerIdentity
+        run: |
+          aws sts get-caller-identity
+    # steps:
+    #   - name: Checkout repository
+    #     uses: actions/checkout@v4
+    #   # use role instead of user
+    #   # https://aws.amazon.com/blogs/security/use-iam-roles-to-connect-github-actions-to-actions-in-aws/
+
+    #   - name: Build docker image
+    #     working-directory: ${{ env.FRONTEND_PATH }}
+    #     run: sudo docker build --tag mp-backend:latest .
+    #     # There should be a step that utilizes aws-actions/amazon-ecr-login action for logging into ECR. 
+    #     # (using 3rd party actions) The ECR login step should also be accessing Github Secrets for credentials. (secure approach)
+    #     # There should be a step that pushes the docker image to ECR in the AWS account. 
+    #     # There should be a step that deploys the application using kubectl to the eks cluster
+        
+        
