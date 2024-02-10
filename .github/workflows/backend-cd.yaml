@@ -19,7 +19,7 @@ on:
 env:
   BACKEND_PATH: ./starter/backend
   PYTHON_VERSION: '3.10'
-
+  AWS_REGION: "eu-central-1"
 
 jobs:
     lint-job:
