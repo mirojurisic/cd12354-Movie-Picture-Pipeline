@@ -23,7 +23,7 @@ env:
 
 jobs:
   lint-job:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -66,7 +66,7 @@ jobs:
       #   name: Inform of cache hit
       #   run: echo "cache miss :("
   test-job:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -109,7 +109,7 @@ jobs:
     # I was confused does step in build needs to be repated or there was an error in assignement defintion
     needs: [lint-job, test-job]
     # if jobs in needs are successful
-    if: success() && github.event.pull_request.merged == true
+    if: success() && github.event.pull_request.merged == true || github.event_name == 'push'
     runs-on: ubuntu-latest
 
     # Permission can be added at job level or workflow level    
