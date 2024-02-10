@@ -1,0 +1,76 @@
+# A Continuous Integration workflow that:
+#     Runs on pull_requests against the main branch,only when code in the frontend application changes.
+#     Is able to be run on-demand (i.e. manually without needing to push code)
+#     Runs the following jobs in parallel:
+#     Runs a linting job that fails if the code doesn't adhere to eslint rules
+#     Runs a test job that fails if the test suite doesn't pass
+#     Runs a build job only if the lint and test jobs pass and successfully builds the application
+name: Miro's BE CI
+on:
+    # push to main branch
+    pull_request:
+        branches: main
+    # Manual trigger
+    workflow_dispatch:
+env:
+  BACKEND_PATH: ./starter/backend
+  PYTHON_VERSION: 3.10'
+
+
+jobs:
+    lint-job:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Python
+              uses: actions/setup-python@v4
+              with:
+                python-version: ${{  env.PYTHON_VERSION}}
+
+            - name: Install dependencies
+              # change path
+              working-directory: ${{ env.BACKEND_PATH }}
+              run: pipenv install
+
+            - name: Run lint
+              id: run-lint
+              working-directory: ${{ env.BACKEND_PATH }}
+              run: pipenv run lint
+
+    test-job:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Setup Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: ${{  env.PYTHON_VERSION}}
+
+        - name: Install dependencies
+            # change path
+          working-directory: ${{ env.BACKEND_PATH }}
+          run: pipenv install
+
+        - name: Run test
+          working-directory: ${{ env.BACKEND_PATH }}
+          run: pipenv run test
+
+    build-job:
+      # I was confused does step in build needs to be repated or there was an error in assignement defintion
+      needs: [lint-job, test-job]
+      # if jobs in needs are successful
+      if: success()
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+
+        # build and deploy to AWS K8 cluster
+        - name: Build docker image
+          working-directory: ${{ env.BACKEND_PATH }}
+          run: docker build --tag mp-backend:latest .
+
