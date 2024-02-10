@@ -120,6 +120,9 @@ jobs:
       - name: Git clone the repository
         uses: actions/checkout@v3
 
+    #   # use role instead of user
+    #   # https://aws.amazon.com/blogs/security/use-iam-roles-to-connect-github-actions-to-actions-in-aws/
+
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v4.0.2
         with:
@@ -130,12 +133,21 @@ jobs:
       - name: Sts GetCallerIdentity
         run: |
           aws sts get-caller-identity
-    # steps:
-    #   - name: Checkout repository
-    #     uses: actions/checkout@v4
-    #   # use role instead of user
-    #   # https://aws.amazon.com/blogs/security/use-iam-roles-to-connect-github-actions-to-actions-in-aws/
 
+      - name: Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+  
+      - name: Build and push image to ECR
+        working-directory: ${{ env.FRONTEND_PATH }}
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          REPOSITORY: movie-picture-frontend
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+    
     #   - name: Build docker image
     #     working-directory: ${{ env.FRONTEND_PATH }}
     #     run: sudo docker build --tag mp-backend:latest .
