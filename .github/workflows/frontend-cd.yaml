@@ -159,7 +159,7 @@ jobs:
 
       - name: Check k8s config
         run: |
-          aws sts assume-role --role-arn "arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/eks_cluster_role --role-session-name AWSCLI-Session
+          aws sts assume-role --role-arn "arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/eks_cluster_role" --role-session-name AWSCLI-Session
           kubectl get svc
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
