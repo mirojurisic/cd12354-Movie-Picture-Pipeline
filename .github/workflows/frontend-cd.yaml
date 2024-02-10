@@ -155,8 +155,6 @@ jobs:
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
-        with:
-          version: 'v3.0.0' # default is latest stable
 
       - name: Deploy the Docker image to Amazon EKS
         env:
