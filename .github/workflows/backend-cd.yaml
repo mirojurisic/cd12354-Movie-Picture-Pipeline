@@ -20,6 +20,7 @@ env:
   BACKEND_PATH: ./starter/backend
   PYTHON_VERSION: '3.10'
   AWS_REGION: "eu-central-1"
+  EKS_CLUSTER_NAME: movie-picture-cluster
 
 jobs:
     lint-job:
@@ -116,4 +117,19 @@ jobs:
             docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
             docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
-
+            - name: Kubeconfig Auth
+            run: |
+              aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+    
+        - name: Install kubectl
+          uses: azure/setup-kubectl@v3
+  
+        - name: Deploy the Docker image to Amazon EKS
+          env:
+            REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+            REPOSITORY: movie-picture-backend
+            IMAGE_TAG: ${{ github.sha }}
+          working-directory: ${{ env.BACKEND_PATH }}/k8s
+          run: |
+            kustomize edit set image backend=$REGISTRY/$REPOSITORY:$IMAGE_TAG
+            kustomize build | kubectl apply -f -
