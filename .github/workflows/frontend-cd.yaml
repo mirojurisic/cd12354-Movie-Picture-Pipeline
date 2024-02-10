@@ -147,20 +147,24 @@ jobs:
           docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
     
-      - name: Kubeconfig Auth
+      - name: Update cluster name
         run: |
           aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
 
-      - name: Deploy the Docker image to Amazon EKS
+      - name: Change docker image version
         env:
           REGISTRY: ${{ steps.ecr-login.outputs.registry }}
           REPOSITORY: movie-picture-frontend
           IMAGE_TAG: ${{ github.sha }}
         working-directory: ${{ env.FRONTEND_PATH }}/k8s
-        # output of build command is input for kubectl apply command !
         run: |
           kustomize edit set image frontend=$REGISTRY/$REPOSITORY:$IMAGE_TAG
+
+      - name: Deploy the Docker image to Amazon EKS
+        working-directory: ${{ env.FRONTEND_PATH }}/k8s
+        # output of build command is input for kubectl apply command !
+        run: |
           kustomize build | kubectl apply -f - --validate=false
