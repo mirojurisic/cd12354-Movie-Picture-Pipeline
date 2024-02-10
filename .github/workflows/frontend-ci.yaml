@@ -2,7 +2,7 @@
 # on every pull request against the main branch.
 name: Miro's FE CI
 on:
-    # push to main branch
+    # pull_request to main branch
     pull_request:
         branches: main
     # Manual trigger
@@ -94,7 +94,10 @@ jobs:
           run: npm run test
 
     build-job:
+      # I was confused does step in build needs to be repated or there was an error in assignement defintion
       needs: [lint-job, test-job]
+      # if jobs in needs are successful
+      if: success()
       runs-on: ubuntu-latest
       steps:
         - name: Checkout repository
@@ -102,14 +105,4 @@ jobs:
 
         - name: Build docker image
           working-directory: ${{ env.frontend_path }}
-          run: docker build --tag mp-backend:latest .
-
-
-# BUILD JOB: This job should only run after the first 2 succeed (student has to use the "needs" syntax) There should be a step that builds the application using docker. The job should have these steps:
-
-# Checkout code
-# Setup NodeJS
-# Perform a cache action to restore cache before dependency install
-# Install dependencies
-# Run the npm run test command
-# The pipeline should be executed automatically on pull_request The pipeline should be able to be run manually The pipeline should be running without errors with all tests passing and no output failures from any of the steps
+          run: sudo docker build --tag mp-backend:latest .

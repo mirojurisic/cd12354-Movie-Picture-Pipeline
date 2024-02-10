@@ -12,10 +12,10 @@ on:
         branches: main
     # Manual trigger
     workflow_dispatch:
-    # TODO: this is to speed up development, needs to be commented out before submitting project
-    push:
-        branches:
-            main
+    # DONE: this is to speed up development, needs to be commented out before submitting project
+    # push:
+    #     branches:
+    #         main
 env:
   BACKEND_PATH: ./starter/backend
   PYTHON_VERSION: '3.10'
