@@ -14,7 +14,7 @@ on:
     workflow_dispatch:
 env:
   BACKEND_PATH: ./starter/backend
-  PYTHON_VERSION: 3.10'
+  PYTHON_VERSION: '3.10'
 
 
 jobs:
