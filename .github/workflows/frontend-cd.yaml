@@ -10,20 +10,20 @@ on:
     # Manual trigger
     workflow_dispatch:
     # DONE: this is to speed up development, needs to be commented out before submitting project
-    push:
-        branches:
-            main
+    # push:
+    #     branches:
+    #         main
 env:
   FRONTEND_PATH: ./starter/frontend
   NODE_VERSION: '18'
- # REACT_APP_MOVIE_API_URL
 
-  AWS_REGION: "eu-central-1" #Change to reflect your Region
-
+  AWS_REGION: "eu-central-1"
+  EKS_CLUSTER_NAME: movie-picture-cluster
 
 jobs:
   lint-job:
-    if: github.event.pull_request.merged == true || github.event_name == 'push'
+    if: github.event.pull_request.merged == true  || github.event_name == 'workflow_dispatch' 
+    # || github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -66,7 +66,8 @@ jobs:
       #   name: Inform of cache hit
       #   run: echo "cache miss :("
   test-job:
-    if: github.event.pull_request.merged == true || github.event_name == 'push'
+    if: github.event.pull_request.merged == true  || github.event_name == 'workflow_dispatch'
+    # || github.event_name == 'push' 
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -109,7 +110,7 @@ jobs:
     # I was confused does step in build needs to be repated or there was an error in assignement defintion
     needs: [lint-job, test-job]
     # if jobs in needs are successful
-    if: success() && github.event.pull_request.merged == true || github.event_name == 'push'
+    if: success() && (github.event.pull_request.merged == true || github.event_name == 'push'  || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
 
     # Permission can be added at job level or workflow level    
@@ -148,12 +149,23 @@ jobs:
           docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
     
-    #   - name: Build docker image
-    #     working-directory: ${{ env.FRONTEND_PATH }}
-    #     run: sudo docker build --tag mp-backend:latest .
-    #     # There should be a step that utilizes aws-actions/amazon-ecr-login action for logging into ECR. 
-    #     # (using 3rd party actions) The ECR login step should also be accessing Github Secrets for credentials. (secure approach)
-    #     # There should be a step that pushes the docker image to ECR in the AWS account. 
-    #     # There should be a step that deploys the application using kubectl to the eks cluster
-        
-        
+      - name: Kubeconfig Auth
+        run: |
+          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v4.0.0' # default is latest stable
+
+      - name: Deploy the Docker image to Amazon EKS
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          REPOSITORY: movie-picture-frontend
+          IMAGE_TAG: ${{ github.sha }}
+        working-directory: ${{ env.FRONTEND_PATH }}/k8s
+        run: |
+          kustomize edit set image frontend=$REGISTRY/$REPOSITORY:$IMAGE_TAG
+          kustomize build | kubectl apply -f -
+          kubectl rollout status deployment/frontend
+          kubectl get services -o wide
