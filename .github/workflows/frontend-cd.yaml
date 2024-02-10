@@ -163,4 +163,6 @@ jobs:
         # output of build command is input for kubectl apply command !
         run: |
           kustomize edit set image frontend=$REGISTRY/$REPOSITORY:$IMAGE_TAG
-          kustomize build | kubectl apply -f -
+          kustomize build 
+          
+        # | kubectl apply -f -
