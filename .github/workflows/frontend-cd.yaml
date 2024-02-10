@@ -151,11 +151,13 @@ jobs:
         run: |
           aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
       
-      - name: Check k8s config
+      - name: Check k8s config minify
         run: |
           kubectl config view --minify
-          kubectl get svc
 
+      - name: Check k8s config
+        run: |
+          kubectl get svc
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
 
