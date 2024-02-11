@@ -12,6 +12,9 @@ jobs:
     permissions:
       id-token: write   # This is required for requesting the JWT
       contents: read    # This is required for actions/checkout
+    defaults:
+        run:
+          working-directory: ${{ env.TERRAFORM_PATH }}
     steps:
       - name: Git clone the repository
         uses: actions/checkout@v3
