@@ -13,14 +13,15 @@ on:
       # Manual trigger
     workflow_dispatch:
       # DONE: this is to speed up development, needs to be commented out before submitting project
-    # push:
-    #     branches:
-    #         main
+    push:
+        branches:
+            main
 env:
   BACKEND_PATH: ./starter/backend
   PYTHON_VERSION: '3.10'
   AWS_REGION: "eu-central-1"
   EKS_CLUSTER_NAME: movie-picture-cluster
+  ECS_REPO_NAME: movie-picture-backend
 
 jobs:
     lint-job:
@@ -111,25 +112,32 @@ jobs:
           working-directory: ${{ env.BACKEND_PATH }}
           env:
             REGISTRY: ${{ steps.ecr-login.outputs.registry }}
-            REPOSITORY: movie-picture-backend
+            REPOSITORY: ${{ env.ECS_REPO_NAME }} 
             IMAGE_TAG: ${{ github.sha }}
           run: |
             docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
             docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-
-            - name: Kubeconfig Auth
-            run: |
+        - name: Update cluster name
+          run: |
               aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
-    
+
         - name: Install kubectl
           uses: azure/setup-kubectl@v3
-  
+
+        - name: Check k8s config minify
+          run: |
+            kubectl config view --minify
+
+        - name: Check k8s config
+          run: |
+            kubectl get svc
+
         - name: Deploy the Docker image to Amazon EKS
           env:
             REGISTRY: ${{ steps.ecr-login.outputs.registry }}
-            REPOSITORY: movie-picture-backend
+            REPOSITORY: ${{ env.ECS_REPO_NAME }} 
             IMAGE_TAG: ${{ github.sha }}
           working-directory: ${{ env.BACKEND_PATH }}/k8s
           run: |
             kustomize edit set image backend=$REGISTRY/$REPOSITORY:$IMAGE_TAG
-            kustomize build | kubectl apply -f -
+            kustomize build | kubectl apply -f - --validate=false

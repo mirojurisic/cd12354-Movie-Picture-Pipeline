@@ -10,15 +10,17 @@ on:
     # Manual trigger
     workflow_dispatch:
     # DONE: this is to speed up development, needs to be commented out before submitting project
-    # push:
-    #     branches:
-    #         main
+    push:
+        branches:
+            main
 env:
   FRONTEND_PATH: ./starter/frontend
   NODE_VERSION: '18'
 
   AWS_REGION: "eu-central-1"
   EKS_CLUSTER_NAME: movie-picture-cluster
+  ECS_REPO_NAME: movie-picture-frontend
+
 
 jobs:
   lint-job:
@@ -136,22 +138,23 @@ jobs:
       - name: Login to ECR
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
-  
+
       - name: Build and push image to ECR
         working-directory: ${{ env.FRONTEND_PATH }}
         env:
           REGISTRY: ${{ steps.ecr-login.outputs.registry }}
-          REPOSITORY: movie-picture-frontend
+          REPOSITORY: ${{ env.ECS_REPO_NAME }} 
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-    
+
       - name: Update cluster name
         run: |
           aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
-# When an Amazon EKS cluster is created, the IAM entity (user or role) that creates the cluster is added to the Kubernetes RBAC authorization table as the administrator. 
-# Initially, only that IAM user can make calls to the Kubernetes API server using kubectl.
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
 
       - name: Check k8s config minify
         run: |
@@ -159,19 +162,12 @@ jobs:
 
       - name: Check k8s config
         run: |
-          assume_role_output=$(aws sts assume-role --role-arn "arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/eks_cluster_role" --role-session-name AWSCLI-Session | cat)
-          export AWS_ACCESS_KEY_ID=$(echo $assume_role_output | jq -r '.Credentials.AccessKeyId')
-          export AWS_SECRET_ACCESS_KEY=$(echo $assume_role_output | jq -r '.Credentials.SecretAccessKey')
-          export AWS_SESSION_TOKEN=$(echo $assume_role_output | jq -r '.Credentials.SessionToken')
-          export AWS_DEFAULT_REGION="eu-central-1"
           kubectl get svc
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v3
 
       - name: Change docker image version
         env:
           REGISTRY: ${{ steps.ecr-login.outputs.registry }}
-          REPOSITORY: movie-picture-frontend
+          REPOSITORY: ${{ env.ECS_REPO_NAME }} 
           IMAGE_TAG: ${{ github.sha }}
         working-directory: ${{ env.FRONTEND_PATH }}/k8s
         run: |
