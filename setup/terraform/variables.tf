@@ -1,6 +1,11 @@
 variable "k8s_version" {
   default = "1.25"
 }
+variable "aws_region"{
+  type        = string
+  description = "default aws region"
+  default     = "eu-central-1"
+}
 
 variable "enable_private" {
   default = false
