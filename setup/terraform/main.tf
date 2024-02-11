@@ -4,7 +4,7 @@
 # Create a VPC
 resource "aws_vpc" "vpc" {
   tags = {
-    "Name" = "udacity"
+    "Name" = "udacity${var.version}"
   }
   cidr_block           = "10.0.0.0/16"
   enable_dns_support   = true
@@ -23,7 +23,7 @@ resource "aws_subnet" "public_subnet" {
   availability_zone       = "${var.aws_region}${var.public_az}"
   map_public_ip_on_launch = true
   tags = {
-    Name = "udacity-public"
+    Name = "udacity-public${var.version}"
   }
 }
 
@@ -37,7 +37,7 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "public"
+    Name = "public${var.version}"
   }
 }
 
@@ -53,7 +53,7 @@ resource "aws_subnet" "private_subnet" {
   availability_zone = "${var.aws_region}${var.private_az}"
   cidr_block        = "10.0.2.0/24"
   tags = {
-    Name = "udacity-private"
+    Name = "udacity-private${var.version}"
   }
 }
 
@@ -62,7 +62,7 @@ resource "aws_route_table" "private" {
   vpc_id = aws_vpc.vpc.id
 
   tags = {
-    Name = "private"
+    Name = "private${var.version}"
   }
 }
 
@@ -117,7 +117,7 @@ resource "aws_vpc_endpoint" "ecr-api-endpoint" {
 # ECR Repositories
 ###################
 resource "aws_ecr_repository" "frontend" {
-  name                 = "movie-picture-frontend"
+  name                 = "movie-picture-frontend${var.version}"
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 
@@ -127,7 +127,7 @@ resource "aws_ecr_repository" "frontend" {
 }
 
 resource "aws_ecr_repository" "backend" {
-  name                 = "movie-picture-backend"
+  name                 = "movie-picture-backend${var.version}"
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 
@@ -141,7 +141,7 @@ resource "aws_ecr_repository" "backend" {
 ################
 # Create an EKS cluster
 resource "aws_eks_cluster" "main" {
-  name     = "movie-picture-cluster"
+  name     = "movie-picture-cluster${var.version}"
   version  = var.k8s_version
   role_arn = aws_iam_role.eks_cluster.arn
   vpc_config {
@@ -155,7 +155,7 @@ resource "aws_eks_cluster" "main" {
 
 # Create an IAM role for the EKS cluster
 resource "aws_iam_role" "eks_cluster" {
-  name = "eks_cluster_role"
+  name = "eks_cluster_role${var.version}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -192,7 +192,7 @@ data "aws_ssm_parameter" "eks_ami_release_version" {
 }
 
 resource "aws_eks_node_group" "main" {
-  node_group_name = "udacity"
+  node_group_name = "udacity${var.version}"
   cluster_name    = aws_eks_cluster.main.name
   version         = aws_eks_cluster.main.version
   node_role_arn   = aws_iam_role.node_group.arn
@@ -222,7 +222,7 @@ resource "aws_eks_node_group" "main" {
 
 // IAM Configuration
 resource "aws_iam_role" "node_group" {
-  name               = "udacity-node-group"
+  name               = "udacity-node-group${var.version}"
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
 }
 
