@@ -6,3 +6,4 @@ node_modules
 credentials
 .pytest_cache
 setup/terraform/terraform.tfstate
+setup/terraform/terraform-infra.yaml
