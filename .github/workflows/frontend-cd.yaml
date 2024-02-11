@@ -146,7 +146,7 @@ jobs:
           REPOSITORY: ${{ env.ECS_REPO_NAME }} 
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build --build-arg=REACT_APP_MOVIE_API_URL=http://a63b0c40d99cd457bb5c2f5c2edb624f-1923285280.eu-central-1.elb.amazonaws.com:5000 -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker build --build-arg=REACT_APP_MOVIE_API_URL=http://a63b0c40d99cd457bb5c2f5c2edb624f-1923285280.eu-central-1.elb.amazonaws.com:80 -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
       - name: Update cluster name
