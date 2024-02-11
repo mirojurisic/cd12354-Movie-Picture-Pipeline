@@ -123,6 +123,8 @@ jobs:
 
     #   # use role instead of user
     #   # https://aws.amazon.com/blogs/security/use-iam-roles-to-connect-github-actions-to-actions-in-aws/
+    #   # you cannot use this process for non rganisational repos?
+    
 
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v4.0.2

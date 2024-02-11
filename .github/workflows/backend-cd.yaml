@@ -96,9 +96,12 @@ jobs:
         - name: configure aws credentials
           uses: aws-actions/configure-aws-credentials@v4.0.2
           with:
-            role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/Github-runner-role #change to reflect your IAM role’s ARN
-            role-session-name: GitHub_to_AWS_via_FederatedOIDC
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             aws-region: ${{ env.AWS_REGION }}
+            role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/Github-runner-role
+            role-duration-seconds: 3600
+            role-session-name: GitHub_to_AWS_via_Temp_Credentials
         # Hello from AWS: WhoAmI
         - name: Sts GetCallerIdentity
           run: |
